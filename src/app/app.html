@@ -1,0 +1,643 @@
+<!-- Main Layout Wrapper -->
+<div class="min-h-screen bg-[#F8FAFC] flex flex-col font-sans antialiased text-slate-900" id="main_layout_wrapper">
+  
+  <!-- Premium Header -->
+  <header class="bg-white border-b border-slate-200 py-5 px-6 sticky top-0 z-50 shadow-xs backdrop-blur-md bg-white/95" id="app_header">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="bg-indigo-600 text-white p-2.5 rounded-xl flex items-center justify-center shadow-sm" id="header_icon_container">
+          <mat-icon class="text-white">restaurant_menu</mat-icon>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-slate-900" id="header_title">KitchenSync AI</h1>
+          <p class="text-slate-500 font-medium uppercase tracking-widest text-[10px] mt-1" id="header_subtitle">Budget-First Meal Intelligence & Tasks</p>
+        </div>
+      </div>
+      
+      <!-- Quick Status Indicators (Desktop) -->
+      <div class="hidden sm:flex items-center space-x-4 text-xs font-mono text-slate-500" id="header_stats">
+        @if (plan()) {
+          <div class="flex items-center space-x-1.5 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full font-sans font-medium border border-emerald-100" id="header_completion_pill">
+            <mat-icon class="text-emerald-600 text-sm w-4 h-4 flex items-center justify-center">task_alt</mat-icon>
+            <span>{{ progressPercentage() }}% Cooked</span>
+          </div>
+          <div class="flex items-center space-x-1.5 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full font-sans font-medium border border-indigo-100" id="header_grocery_pill">
+            <mat-icon class="text-indigo-600 text-sm w-4 h-4 flex items-center justify-center">shopping_basket</mat-icon>
+            <span>{{ groceryStats().completed }}/{{ groceryStats().total }} Grocery Items</span>
+          </div>
+        } @else {
+          <div class="flex items-center space-x-1.5 bg-indigo-50/50 text-indigo-700 px-3 py-1.5 rounded-full font-sans font-medium border border-indigo-100/30" id="header_idle_pill">
+            <mat-icon class="text-indigo-600 text-sm w-4 h-4 flex items-center justify-center">auto_awesome</mat-icon>
+            <span>Meal Intelligence Ready</span>
+          </div>
+        }
+      </div>
+    </div>
+  </header>
+
+  <!-- Notification Toast (Grocery Copy Status) -->
+  @if (showCopiedToast()) {
+    <div class="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-sm px-4 py-3 rounded-xl shadow-lg flex items-center space-x-2 transition-all duration-300" id="copied_toast">
+      <mat-icon class="text-emerald-400">check_circle</mat-icon>
+      <span class="font-medium">Grocery list copied to clipboard!</span>
+    </div>
+  }
+
+  <!-- Main Grid Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8" id="main_content_grid">
+    
+    <!-- LEFT PANEL: Planner Inputs (Form) -->
+    <section class="lg:col-span-5 flex flex-col space-y-6" id="left_panel_section">
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-xs flex flex-col space-y-6" id="input_form_card">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900 flex items-center space-x-2 tracking-tight">
+            <mat-icon class="text-indigo-600">tune</mat-icon>
+            <span>Planner Settings</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-1 font-medium">Configure your daily context to let AI build a perfect feasibility strategy.</p>
+        </div>
+
+        <!-- Preset Fill Buttons -->
+        <div class="flex flex-col space-y-2.5" id="preset_chips_container">
+          <span class="text-slate-400 font-bold uppercase tracking-widest text-[10px] block">Quick Schedule Presets</span>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" 
+                    (click)="selectPreset('busy')"
+                    class="flex items-center space-x-2 px-3 py-2.5 text-left border border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-xl transition text-xs font-bold text-slate-700 cursor-pointer"
+                    id="preset_busy_btn">
+              <span class="text-lg">⚡</span>
+              <span class="truncate">Fast & Busy</span>
+            </button>
+            <button type="button" 
+                    (click)="selectPreset('wfh')"
+                    class="flex items-center space-x-2 px-3 py-2.5 text-left border border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-xl transition text-xs font-bold text-slate-700 cursor-pointer"
+                    id="preset_wfh_btn">
+              <span class="text-lg">🏡</span>
+              <span class="truncate">Work From Home</span>
+            </button>
+            <button type="button" 
+                    (click)="selectPreset('gym')"
+                    class="flex items-center space-x-2 px-3 py-2.5 text-left border border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-xl transition text-xs font-bold text-slate-700 cursor-pointer"
+                    id="preset_gym_btn">
+              <span class="text-lg">🏃</span>
+              <span class="truncate">Gym / High Energy</span>
+            </button>
+            <button type="button" 
+                    (click)="selectPreset('weekend')"
+                    class="flex items-center space-x-2 px-3 py-2.5 text-left border border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-xl transition text-xs font-bold text-slate-700 cursor-pointer"
+                    id="preset_weekend_btn">
+              <span class="text-lg">🎉</span>
+              <span class="truncate">Lazy Weekend</span>
+            </button>
+          </div>
+        </div>
+
+        <form [formGroup]="plannerForm" (ngSubmit)="generatePlan()" class="flex flex-col space-y-5" id="planner_interactive_form">
+          <!-- Day Description -->
+          <div class="flex flex-col space-y-1.5" id="form_group_day_desc">
+            <label for="dayDescription" class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Describe Your Day & Schedule</label>
+            <textarea id="dayDescription"
+                      formControlName="dayDescription"
+                      rows="3"
+                      placeholder="e.g. Back-to-back classes with only 15 mins for lunch, then heading straight to the gym."
+                      class="w-full text-sm px-4 py-3 bg-slate-50/60 border border-slate-200 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 rounded-xl transition-all outline-none resize-none placeholder:text-slate-400 font-medium"></textarea>
+            @if (plannerForm.get('dayDescription')?.touched && plannerForm.get('dayDescription')?.errors?.['required']) {
+              <p class="text-xs text-rose-500 font-medium flex items-center space-x-1 mt-1">
+                <mat-icon class="text-xs w-4 h-4 flex items-center justify-center">error</mat-icon>
+                <span>Please describe your schedule.</span>
+              </p>
+            }
+          </div>
+
+          <!-- Daily Budget -->
+          <div class="flex flex-col space-y-1.5" id="form_group_budget">
+            <div class="flex items-center justify-between">
+              <label for="budget" class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Daily Food Budget</label>
+              <span class="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-md border border-indigo-100/50">${{ plannerForm.get('budget')?.value }} USD</span>
+            </div>
+            <input type="range" 
+                   id="budget"
+                   formControlName="budget"
+                   min="5" 
+                   max="100" 
+                   step="5"
+                   class="w-full accent-indigo-600 bg-slate-100 rounded-lg h-1.5 cursor-pointer" />
+            <div class="flex justify-between text-[9px] font-mono font-bold text-slate-400">
+              <span>$5 (Very Budget)</span>
+              <span>$50</span>
+              <span>$100 (Generous)</span>
+            </div>
+          </div>
+
+          <!-- Dietary Restrictions -->
+          <div class="flex flex-col space-y-1.5" id="form_group_diet">
+            <label for="dietaryPreferences" class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Dietary Preferences</label>
+            <div class="relative">
+              <select id="dietaryPreferences"
+                      formControlName="dietaryPreferences"
+                      class="w-full text-sm px-4 py-3 bg-slate-50/60 border border-slate-200 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 rounded-xl transition-all outline-none appearance-none cursor-pointer font-medium">
+                <option value="None">None (Anything goes)</option>
+                <option value="Vegetarian">Vegetarian</option>
+                <option value="Vegan">Vegan</option>
+                <option value="Gluten-Free">Gluten-Free</option>
+                <option value="Keto / Low-Carb">Keto / Low-Carb</option>
+                <option value="High-Protein">High-Protein</option>
+              </select>
+              <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 flex items-center">
+                <mat-icon>expand_more</mat-icon>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pantry Items to Use Up -->
+          <div class="flex flex-col space-y-1.5" id="form_group_pantry">
+            <label for="pantryItems" class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Pantry Items to Use Up (Optional)</label>
+            <input type="text"
+                   id="pantryItems"
+                   formControlName="pantryItems"
+                   placeholder="e.g. Spinach, eggs, stale bread, oats"
+                   class="w-full text-sm px-4 py-3 bg-slate-50/60 border border-slate-200 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 rounded-xl transition-all outline-none placeholder:text-slate-400 font-medium" />
+            <p class="text-[10px] text-slate-400 mt-0.5 font-medium">Let AI integrate these to reduce waste and save ingredients.</p>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit"
+                  [disabled]="isGenerating()"
+                  class="w-full py-3.5 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-50 disabled:hover:bg-indigo-600 flex items-center justify-center space-x-2 mt-4 cursor-pointer"
+                  id="generate_plan_submit_btn">
+            @if (isGenerating()) {
+              <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Strategizing Meal To-Do List...</span>
+            } @else {
+              <mat-icon>restaurant</mat-icon>
+              <span>Generate Meal To-Do List</span>
+            }
+          </button>
+        </form>
+      </div>
+
+      <!-- Quick Cooking Helper Box -->
+      <div class="bg-indigo-50/50 border border-indigo-100/50 rounded-2xl p-5 text-indigo-900 text-xs flex items-start space-x-3" id="pantry_strategist_banner">
+        <mat-icon class="text-indigo-500 mt-0.5">lightbulb</mat-icon>
+        <div>
+          <h4 class="font-bold text-indigo-950">Why are my schedules integrated?</h4>
+          <p class="text-indigo-700/80 mt-1 leading-relaxed font-medium">
+            By aligning your recipes with your day's timing, we ensure you don't end up trying to boil pasta for 45 minutes on a day you have back-to-back meetings. Let our strategist plan active vs passive tasks!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: Output Results or Empty/Loading Views -->
+    <section class="lg:col-span-7 flex flex-col" id="right_panel_section">
+      
+      <!-- Error Message Banner -->
+      @if (error()) {
+        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-6 mb-6 flex items-start space-x-4 text-rose-900 shadow-xs" id="error_alert_box">
+          <mat-icon class="text-rose-600">warning_amber</mat-icon>
+          <div class="flex-1">
+            <h3 class="font-bold text-rose-950 text-sm">Failed to generate meal schedule</h3>
+            <p class="text-xs text-rose-800 mt-1 font-semibold leading-relaxed">{{ error() }}</p>
+            <button (click)="generatePlan()" class="mt-3 text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold py-1.5 px-3 rounded-lg transition shadow-xs cursor-pointer" id="error_retry_btn">
+              Retry Generation
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- EMPTY STATE: Prior to generating anything -->
+      @if (!plan() && !isGenerating() && !error()) {
+        <div class="bg-white border border-slate-200 rounded-2xl p-12 text-center flex flex-col items-center justify-center space-y-6 flex-1 shadow-xs" id="empty_state_card">
+          <div class="bg-slate-50 p-6 rounded-full text-slate-400 border border-slate-100" id="empty_icon_container">
+            <mat-icon class="text-6xl w-16 h-16 flex items-center justify-center text-slate-300">receipt_long</mat-icon>
+          </div>
+          <div class="max-w-md space-y-2">
+            <h3 class="text-lg font-bold text-slate-900 tracking-tight">Your interactive kitchen plan awaits</h3>
+            <p class="text-xs text-slate-500 leading-relaxed font-medium">
+              Describe your day's schedule and specify your grocery budget. We will immediately build a custom, step-by-step cooking to-do list with integrated savings and grocery checklists.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full">✓ 100% Budget Safe</span>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full">✓ Custom Timing</span>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full">✓ Quick Steps</span>
+          </div>
+        </div>
+      }
+
+      <!-- LOADING STATE: Displayed during API processing -->
+      @if (isGenerating()) {
+        <div class="bg-white border border-slate-200 rounded-2xl p-12 text-center flex flex-col items-center justify-center space-y-8 flex-1 shadow-xs" id="loading_state_card">
+          
+          <!-- Cooking-themed spinner icon -->
+          <div class="relative w-20 h-20" id="loading_spinner_container">
+            <div class="absolute inset-0 rounded-full border-4 border-indigo-100 animate-pulse"></div>
+            <div class="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-indigo-600" id="inner_loading_icon">
+              <mat-icon class="text-3xl">skillet</mat-icon>
+            </div>
+          </div>
+          
+          <div class="max-w-md space-y-3">
+            <h3 class="text-lg font-bold text-slate-900 animate-pulse tracking-tight">Consulting Culinary Strategist...</h3>
+            <p class="text-xs text-slate-500 font-medium leading-relaxed">
+              We are generating a highly practical, low-cost meal plan aligned with your specific schedule constraints.
+            </p>
+          </div>
+
+          <!-- Rotating Loading Tips Display -->
+          <div class="max-w-md w-full bg-slate-50 border border-slate-200 rounded-xl p-5 text-left transition-all duration-500 shadow-2xs" id="loading_tips_box">
+            <div class="flex items-center space-x-2 text-indigo-600 font-bold text-[10px] uppercase tracking-wider mb-1">
+              <mat-icon class="text-sm">tips_and_updates</mat-icon>
+              <span>Budget Hack #{{ loadingTipIndex() + 1 }}</span>
+            </div>
+            <p class="text-slate-700 text-xs leading-relaxed font-semibold italic transition-all duration-300">
+              "{{ loadingTips[loadingTipIndex()] }}"
+            </p>
+          </div>
+        </div>
+      }
+
+      <!-- PLAN DISPLAY STATE: Loaded Meal Plan and Active To-Do List -->
+      @if (plan(); as activePlan) {
+        <div class="flex flex-col space-y-6 flex-1" id="active_plan_root">
+          
+          <!-- 1. Real-time Kitchen Progress Dashboard -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs flex flex-col space-y-4" id="progress_dashboard_card">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Active Progress</span>
+                <h3 class="text-lg font-bold text-slate-900 tracking-tight mt-0.5">Today's Kitchen Accomplishments</h3>
+              </div>
+              <div class="flex items-baseline space-x-1 font-mono text-slate-900">
+                <span class="text-3xl font-light text-indigo-600">{{ completedTasks() }}</span>
+                <span class="text-sm text-slate-400">/</span>
+                <span class="text-sm text-slate-500 font-bold">{{ totalTasks() }} tasks</span>
+              </div>
+            </div>
+            
+            <!-- Real-time Progress Bar -->
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden shadow-inner" id="interactive_progress_bar">
+              <div class="bg-indigo-600 h-full rounded-full transition-all duration-500 ease-out" 
+                   [style.width.%]="progressPercentage()"></div>
+            </div>
+            
+            <!-- Visual completion checkoff message -->
+            <p class="text-xs text-slate-500 font-semibold" id="progress_encouraging_msg">
+              @if (progressPercentage() === 100) {
+                🎉 <span class="font-bold text-emerald-600">Incredible!</span> You checked off all meal steps and tasks for today.
+              } @else if (progressPercentage() > 50) {
+                🔥 <span class="font-bold text-slate-700">Excellent progress!</span> You are more than halfway through today's kitchen list.
+              } @else if (progressPercentage() > 0) {
+                🚀 Great start! Keep checking off cooking steps as you progress through your day.
+              } @else {
+                🍳 Ready to cook? Check off steps below to track your cooking progress!
+              }
+            </p>
+          </div>
+
+          <!-- 2. Budget Feasibility Assessment Board -->
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs flex flex-col" id="budget_dashboard_card">
+            <!-- Header bar with Feasibility Status -->
+            <div class="px-6 py-4 flex items-center justify-between border-b"
+                 [ngClass]="budgetComparison().isExceeded ? 'bg-rose-50/60 border-rose-100' : 'bg-emerald-50/60 border-emerald-100'" id="budget_feasibility_header">
+              <div class="flex items-center space-x-2">
+                @if (budgetComparison().isExceeded) {
+                  <mat-icon class="text-rose-600">warning</mat-icon>
+                  <span class="text-sm font-bold text-rose-950">Exceeds Budget Constraint</span>
+                } @else {
+                  <mat-icon class="text-emerald-600">check_circle</mat-icon>
+                  <span class="text-sm font-bold text-emerald-950">Budget Feasible & Safe</span>
+                }
+              </div>
+              <span class="text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border"
+                    [ngClass]="budgetComparison().isExceeded ? 'bg-rose-100 text-rose-800 border-rose-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200'">
+                {{ budgetComparison().isExceeded ? 'Caution' : 'Optimal' }}
+              </span>
+            </div>
+
+            <!-- Budget Comparison Details Grid -->
+            <div class="p-6 grid grid-cols-3 gap-4 border-b border-slate-100 text-center bg-slate-50/30" id="budget_details_grid">
+              <div class="flex flex-col items-center justify-center p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Your Limit</span>
+                <span class="text-lg font-mono font-bold text-slate-800 mt-1">${{ budgetComparison().limit }}</span>
+              </div>
+              <div class="flex flex-col items-center justify-center p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Est. Cost</span>
+                <span class="text-lg font-mono font-bold mt-1" 
+                      [ngClass]="budgetComparison().isExceeded ? 'text-rose-600' : 'text-emerald-600'">${{ budgetComparison().actual }}</span>
+              </div>
+              <div class="flex flex-col items-center justify-center p-3 border rounded-xl shadow-2xs"
+                   [ngClass]="budgetComparison().isExceeded ? 'bg-rose-50/50 border-rose-200' : 'bg-emerald-50/50 border-emerald-200'">
+                <span class="text-[10px] font-bold uppercase tracking-widest"
+                      [ngClass]="budgetComparison().isExceeded ? 'text-rose-600' : 'text-emerald-600'">
+                  {{ budgetComparison().isExceeded ? 'Exceeded' : 'Savings' }}
+                </span>
+                <span class="text-lg font-mono font-bold mt-1"
+                      [ngClass]="budgetComparison().isExceeded ? 'text-rose-800' : 'text-emerald-800'">
+                  ${{ budgetComparison().absDifference }}
+                </span>
+              </div>
+            </div>
+
+            <!-- AI Savings Note styled like design's Pro Tip -->
+            <div class="p-5 bg-emerald-50/40 border-t border-slate-100 flex items-start space-x-3 text-xs" id="budget_tip_box">
+              <mat-icon class="text-emerald-600 mt-0.5">local_offer</mat-icon>
+              <div class="space-y-1">
+                <span class="font-bold text-emerald-800 uppercase tracking-widest text-[9px] block">Culinary Strategist Saving Tip</span>
+                <p class="text-emerald-700 leading-relaxed font-semibold italic">"{{ activePlan.budget_analysis.note }}"</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Active Meal Cooking Steps To-Do Lists -->
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs flex flex-col" id="meal_todo_cards">
+            <!-- Tab selectors -->
+            <div class="border-b border-slate-200 bg-slate-50/50 p-2 flex space-x-1" id="meal_tab_navigation">
+              <button type="button"
+                      (click)="activeMealTab.set('breakfast')"
+                      [ngClass]="activeMealTab() === 'breakfast' ? 'bg-amber-50/60 text-amber-800 border border-amber-200/60 shadow-2xs font-bold' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-700 font-semibold'"
+                      class="flex-1 py-3 text-xs rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer border border-transparent" id="tab_breakfast_btn">
+                <span class="text-sm">🍳</span>
+                <span>Breakfast</span>
+                <span class="text-[10px] font-mono text-amber-700 bg-amber-100/40 px-1.5 py-0.5 rounded-md border border-amber-200/10">${{ activePlan.breakfast.est_cost }}</span>
+              </button>
+              <button type="button"
+                      (click)="activeMealTab.set('lunch')"
+                      [ngClass]="activeMealTab() === 'lunch' ? 'bg-sky-50/60 text-sky-800 border border-sky-200/60 shadow-2xs font-bold' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-700 font-semibold'"
+                      class="flex-1 py-3 text-xs rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer border border-transparent" id="tab_lunch_btn">
+                <span class="text-sm">🥗</span>
+                <span>Lunch</span>
+                <span class="text-[10px] font-mono text-sky-700 bg-sky-100/40 px-1.5 py-0.5 rounded-md border border-sky-200/10">${{ activePlan.lunch.est_cost }}</span>
+              </button>
+              <button type="button"
+                      (click)="activeMealTab.set('dinner')"
+                      [ngClass]="activeMealTab() === 'dinner' ? 'bg-indigo-50/60 text-indigo-800 border border-indigo-200/60 shadow-2xs font-bold' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-700 font-semibold'"
+                      class="flex-1 py-3 text-xs rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer border border-transparent" id="tab_dinner_btn">
+                <span class="text-sm">🍲</span>
+                <span>Dinner</span>
+                <span class="text-[10px] font-mono text-indigo-700 bg-indigo-100/40 px-1.5 py-0.5 rounded-md border border-indigo-200/10">${{ activePlan.dinner.est_cost }}</span>
+              </button>
+            </div>
+
+            <!-- Active Tab Content -->
+            <div class="p-6 md:p-8 flex flex-col space-y-6" id="meal_tab_content">
+              
+              <!-- Meal Info Banner -->
+              <div class="flex items-start justify-between gap-4" id="meal_info_banner">
+                <div>
+                  @if (activeMealTab() === 'breakfast') {
+                    <span class="text-[9px] font-bold text-amber-600 uppercase tracking-widest block bg-amber-50 border border-amber-100 px-2.5 py-0.5 rounded-full w-max">Breakfast</span>
+                  }
+                  @if (activeMealTab() === 'lunch') {
+                    <span class="text-[9px] font-bold text-sky-600 uppercase tracking-widest block bg-sky-50 border border-sky-100 px-2.5 py-0.5 rounded-full w-max">Lunch</span>
+                  }
+                  @if (activeMealTab() === 'dinner') {
+                    <span class="text-[9px] font-bold text-indigo-600 uppercase tracking-widest block bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full w-max">Dinner</span>
+                  }
+                  <h3 class="text-lg font-bold text-slate-900 tracking-tight leading-snug mt-2">
+                    @if (activeMealTab() === 'breakfast') { {{ activePlan.breakfast.item }} }
+                    @if (activeMealTab() === 'lunch') { {{ activePlan.lunch.item }} }
+                    @if (activeMealTab() === 'dinner') { {{ activePlan.dinner.item }} }
+                  </h3>
+                </div>
+                <div class="text-right flex flex-col items-end">
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Est. Cost</span>
+                  <span class="text-sm font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100/50 mt-1.5">
+                    $@if (activeMealTab() === 'breakfast') { {{ activePlan.breakfast.est_cost }} }
+                    @if (activeMealTab() === 'lunch') { {{ activePlan.lunch.est_cost }} }
+                    @if (activeMealTab() === 'dinner') { {{ activePlan.dinner.est_cost }} }
+                  </span>
+                </div>
+              </div>
+
+              <!-- List of interactive steps -->
+              <div class="flex flex-col space-y-3" id="cooking_steps_list">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center space-x-1.5 mb-1">
+                  <mat-icon class="text-sm w-4 h-4 flex items-center justify-center">checklist</mat-icon>
+                  <span>Step-by-Step Cooking Steps</span>
+                </span>
+                
+                <!-- Breakfast steps -->
+                @if (activeMealTab() === 'breakfast') {
+                  @for (step of activePlan.breakfast.steps; track $index) {
+                    <button type="button" (click)="toggleStep('breakfast', $index)"
+                         class="w-full text-left flex items-start space-x-3 p-3.5 rounded-xl border cursor-pointer transition-all duration-200 select-none"
+                         [ngClass]="step.completed ? 'bg-slate-50/80 border-slate-200 text-slate-400 font-normal line-through' : 'bg-white border-slate-200 text-slate-800 font-bold shadow-2xs hover:border-amber-300 hover:bg-amber-50/5'">
+                      <span class="mt-0.5 flex items-center justify-center text-amber-500">
+                        <mat-icon>{{ step.completed ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                      </span>
+                      <span class="text-xs leading-relaxed transition-all duration-200">
+                        {{ step.text }}
+                      </span>
+                    </button>
+                  }
+                }
+
+                <!-- Lunch steps -->
+                @if (activeMealTab() === 'lunch') {
+                  @for (step of activePlan.lunch.steps; track $index) {
+                    <button type="button" (click)="toggleStep('lunch', $index)"
+                         class="w-full text-left flex items-start space-x-3 p-3.5 rounded-xl border cursor-pointer transition-all duration-200 select-none"
+                         [ngClass]="step.completed ? 'bg-slate-50/80 border-slate-200 text-slate-400 font-normal line-through' : 'bg-white border-slate-200 text-slate-800 font-bold shadow-2xs hover:border-sky-300 hover:bg-sky-50/5'">
+                      <span class="mt-0.5 flex items-center justify-center text-sky-600">
+                        <mat-icon>{{ step.completed ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                      </span>
+                      <span class="text-xs leading-relaxed transition-all duration-200">
+                        {{ step.text }}
+                      </span>
+                    </button>
+                  }
+                }
+
+                <!-- Dinner steps -->
+                @if (activeMealTab() === 'dinner') {
+                  @for (step of activePlan.dinner.steps; track $index) {
+                    <button type="button" (click)="toggleStep('dinner', $index)"
+                         class="w-full text-left flex items-start space-x-3 p-3.5 rounded-xl border cursor-pointer transition-all duration-200 select-none"
+                         [ngClass]="step.completed ? 'bg-slate-50/80 border-slate-200 text-slate-400 font-normal line-through' : 'bg-white border-slate-200 text-slate-800 font-bold shadow-2xs hover:border-indigo-300 hover:bg-indigo-50/5'">
+                      <span class="mt-0.5 flex items-center justify-center text-indigo-600">
+                        <mat-icon>{{ step.completed ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                      </span>
+                      <span class="text-xs leading-relaxed transition-all duration-200">
+                        {{ step.text }}
+                      </span>
+                    </button>
+                  }
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. General Kitchen To-Do & Prep Tasks (Custom Additions) -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-xs flex flex-col space-y-4" id="custom_prep_tasks_card">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2 tracking-tight">
+                <mat-icon class="text-slate-600">playlist_add_check</mat-icon>
+                <span>Custom Kitchen To-Do & Prep Tasks</span>
+              </h3>
+              <p class="text-xs text-slate-500 mt-1 font-medium">Add your own kitchen duties for today (e.g., defrost chicken, wash dishes, prep coffee pots).</p>
+            </div>
+
+            <!-- Custom Task Input Form -->
+            <div class="flex items-center space-x-2" id="custom_task_input_form">
+              <input type="text"
+                     [value]="customTaskInput()"
+                     (keyup)="handleCustomTaskKeyup($event)"
+                     (keyup.enter)="addCustomTask()"
+                     placeholder="e.g. Wash containers and tidy countertops"
+                     class="flex-1 text-xs px-3.5 py-3 bg-slate-50 border border-slate-200 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 rounded-xl transition-all outline-none font-medium" />
+              <button type="button"
+                      (click)="addCustomTask()"
+                      class="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl flex items-center justify-center shadow-xs transition cursor-pointer" id="add_custom_task_btn">
+                <mat-icon class="text-sm">add</mat-icon>
+              </button>
+            </div>
+
+            <!-- Custom Tasks Checklist -->
+            @if (customTasks().length > 0) {
+              <div class="flex flex-col space-y-2 mt-2" id="custom_tasks_checklist">
+                @for (task of customTasks(); track $index) {
+                  <div class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white shadow-2xs" id="custom_task_row_{{$index}}">
+                    <button type="button" (click)="toggleCustomTask($index)" class="flex items-center space-x-2.5 flex-1 text-left cursor-pointer select-none">
+                      <span class="flex items-center text-indigo-600">
+                        <mat-icon>{{ task.completed ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                      </span>
+                      <span class="text-xs leading-none transition-all duration-150"
+                            [ngClass]="task.completed ? 'line-through text-slate-400 font-normal' : 'text-slate-700 font-bold'">
+                        {{ task.text }}
+                      </span>
+                    </button>
+                    <button type="button" 
+                             (click)="removeCustomTask($index)"
+                             class="text-slate-400 hover:text-rose-500 p-1 rounded-md transition flex items-center justify-center" id="delete_custom_task_btn_{{$index}}">
+                      <mat-icon class="text-sm">delete_outline</mat-icon>
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-xs text-slate-400 italic py-2 text-center font-medium" id="custom_tasks_empty">No custom prep duties added yet. Add some above!</p>
+            }
+          </div>
+
+          <!-- 5. Grocery Shopping List -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-xs flex flex-col space-y-4" id="grocery_shopping_card">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2 tracking-tight">
+                  <mat-icon class="text-indigo-600">shopping_cart</mat-icon>
+                  <span>Grocery Shopping Checklist</span>
+                </h3>
+                <p class="text-xs text-slate-500 mt-1 font-medium">Check off ingredients as you grab them at the market.</p>
+              </div>
+              <div class="flex items-center space-x-2" id="grocery_actions_btn_group">
+                <button type="button"
+                        (click)="copyGroceryList()"
+                        class="text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100/80 px-3.5 py-2 rounded-xl border border-indigo-150 flex items-center space-x-1 transition cursor-pointer" id="copy_groceries_btn">
+                  <mat-icon class="text-xs w-4 h-4 flex items-center justify-center">content_copy</mat-icon>
+                  <span>Copy List</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Grocery Completion Tracker Bar -->
+            <div class="flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 mt-2" id="grocery_stats_row">
+              <span class="tracking-wider">GROCERY CHECKLIST</span>
+              <span>{{ groceryStats().percentage }}% ACQUIRED ({{ groceryStats().completed }}/{{ groceryStats().total }})</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden shadow-inner" id="grocery_progress_bar_wrapper">
+              <div class="bg-indigo-600 h-full rounded-full transition-all duration-300" 
+                   [style.width.%]="groceryStats().percentage"></div>
+            </div>
+
+            <!-- Grocery Items list -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2" id="grocery_items_grid">
+              @for (item of activePlan.grocery_list; track $index) {
+                <button type="button" (click)="toggleGrocery($index)"
+                     class="w-full text-left flex items-center space-x-2.5 p-3 rounded-xl border cursor-pointer select-none transition-all"
+                     [ngClass]="item.completed ? 'bg-emerald-50/20 border-emerald-100/60 text-slate-500' : 'bg-white border-slate-200 shadow-2xs hover:border-indigo-300 hover:bg-indigo-50/5'" id="grocery_item_row_{{$index}}">
+                  <span class="flex items-center" [ngClass]="item.completed ? 'text-emerald-600' : 'text-slate-300'">
+                    <mat-icon class="text-sm">{{ item.completed ? 'task_alt' : 'radio_button_unchecked' }}</mat-icon>
+                  </span>
+                  <span class="text-xs leading-snug transition-all"
+                        [ngClass]="item.completed ? 'line-through text-slate-400 font-normal' : 'text-slate-800 font-bold'">
+                    {{ item.item }}
+                  </span>
+                </button>
+              }
+            </div>
+
+            <!-- Add custom grocery item inline -->
+            <div class="flex items-center space-x-2 mt-2 pt-4 border-t border-slate-100" id="custom_grocery_input_form">
+              <input type="text"
+                     [value]="customGroceryInput()"
+                     (keyup)="handleCustomGroceryKeyup($event)"
+                     (keyup.enter)="addCustomGrocery()"
+                     placeholder="Add extra item to buy..."
+                     class="flex-1 text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 rounded-xl transition-all outline-none font-medium" />
+              <button type="button"
+                      (click)="addCustomGrocery()"
+                      class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center space-x-1 shadow-2xs transition cursor-pointer" id="add_custom_grocery_btn">
+                <mat-icon class="text-xs w-4 h-4 flex items-center justify-center">add</mat-icon>
+                <span>Add</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 6. Ingredient Substitutions Board -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-xs flex flex-col space-y-4" id="substitutions_card">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2 tracking-tight">
+                <mat-icon class="text-indigo-600">swap_horiz</mat-icon>
+                <span>Smart Ingredient Substitutions</span>
+              </h3>
+              <p class="text-xs text-slate-500 mt-1 font-medium">Use cheap pantry-staple alternatives to keep costs low and avoid extra market trips.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="substitutions_grid">
+              @for (sub of activePlan.substitutions; track $index) {
+                <div class="flex items-center justify-between p-3.5 bg-indigo-50/30 rounded-xl border border-indigo-100/60 shadow-2xs" id="substitution_row_{{$index}}">
+                  <span class="text-xs text-indigo-950 font-bold max-w-[45%] truncate">{{ sub.original }}</span>
+                  <span class="text-[10px] text-indigo-400 font-bold">→</span>
+                  <span class="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100/80 px-2.5 py-1 rounded-lg max-w-[45%] truncate">{{ sub.alternative }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- 7. Action Bar buttons -->
+          <div class="flex items-center justify-between gap-4 pt-2" id="action_bar_container">
+            <button type="button"
+                    (click)="resetPlan()"
+                    class="border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 text-slate-600 font-bold py-3 px-6 rounded-xl transition text-xs flex items-center space-x-1.5 cursor-pointer shadow-2xs" id="reset_plan_btn">
+              <mat-icon class="text-sm">restart_alt</mat-icon>
+              <span>Reset & Plan New Day</span>
+            </button>
+            <button type="button"
+                    (click)="printPlan()"
+                    class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-6 rounded-xl shadow-xs hover:shadow-sm transition text-xs flex items-center space-x-1.5 cursor-pointer" id="print_plan_btn">
+              <mat-icon class="text-sm">print</mat-icon>
+              <span>Print Complete Plan</span>
+            </button>
+          </div>
+
+        </div>
+      }
+
+      <!-- Footer Bar -->
+      <footer class="mt-8 mb-4 flex flex-col sm:flex-row justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] gap-3">
+        <div class="flex gap-6">
+          <span>Version 1.0.4</span>
+          <span>Security: SSL Encrypted</span>
+        </div>
+        <div>© 2026 KitchenSync Intelligent Systems</div>
+      </footer>
+
+    </section>
+
+  </main>
+</div>

@@ -1,0 +1,6 @@
+{
+  "name": "AI Cooking Planner",
+  "description": "Generate structured, budget-friendly meal plans with grocery lists, substitutions, and budget feasibility checks based on your day.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
