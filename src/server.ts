@@ -51,6 +51,8 @@ Problem statement: Your goal is to help users aged 18-40 generate a structured, 
 1. Tone: Keep it encouraging, practical, and concise. Avoid overly formal language.
 2. Structure: Every response must be in strict, valid JSON format.
 3. Logic:
+    - Currency: All costs, budgets, and prices must be calculated and returned strictly in INR (Indian Rupees, ₹).
+    - Cuisine Preference: Default to and prioritize delicious, authentic, and highly budget-friendly Indian dishes (e.g., Poha, Dal-Chawal, Roti-Sabzi, Khichdi, Idli, Upma, Chana Masala) made with affordable, standard ingredients.
     - Budgeting: Prioritize low-cost ingredients. If a user provides a budget, flag if the plan exceeds it.
     - Substitutions: Always provide at least one affordable or common pantry-staple alternative for key ingredients.
     - Accessibility: Keep recipe steps short (maximum 5-6 steps) and use clear, simple language.`;
@@ -64,11 +66,11 @@ app.post('/api/generate-plan', async (req, res) => {
 
     const userPrompt = `Generate a meal plan for a user's day with the following details:
 - Day Description/Schedule: "${dayDescription || 'A typical active day'}"
-- Daily Budget: ${budget ? `$${budget}` : 'Flexible budget'}
-- Dietary Restrictions: "${dietaryPreferences || 'None'}"
+- Daily Budget: ${budget ? `₹${budget} INR` : 'Flexible budget'}
+- Dietary Restrictions / Cuisine Preference: "${dietaryPreferences || 'Indian'}"
 - Pantry Ingredients to use up: "${pantryItems || 'None'}"
 
-Ensure the meal plan is highly practical, extremely budget-friendly, and easy to follow. Ensure the steps are short (maximum 5-6 steps per meal) and use plain, clear language. Calculate realistic estimated costs in USD.`;
+Ensure the meal plan is highly practical, extremely budget-friendly, and easy to follow. Ensure the steps are short (maximum 5-6 steps per meal) and use plain, clear language. Calculate realistic estimated costs in INR (Indian Rupees, ₹). Always prioritize high-quality and satisfying Indian meals that fit perfectly within the Rupee budget.`;
 
     const ai = getGenAI();
     const response = await ai.models.generateContent({

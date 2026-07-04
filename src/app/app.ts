@@ -40,8 +40,8 @@ export class App {
   // Form setup using Angular Reactive Forms (Strict Guidelines Compliance)
   plannerForm: FormGroup = this.fb.group({
     dayDescription: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(500)]],
-    budget: [20, [Validators.required, Validators.min(1), Validators.max(500)]],
-    dietaryPreferences: ['None'],
+    budget: [400, [Validators.required, Validators.min(50), Validators.max(5000)]],
+    dietaryPreferences: ['Indian'],
     pantryItems: ['']
   });
 
@@ -312,8 +312,8 @@ export class App {
     this.customTasks.set([]);
     this.plannerForm.reset({
       dayDescription: '',
-      budget: 20,
-      dietaryPreferences: 'None',
+      budget: 400,
+      dietaryPreferences: 'Indian',
       pantryItems: ''
     });
   }

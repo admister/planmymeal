@@ -113,30 +113,32 @@
           <div class="flex flex-col space-y-1.5" id="form_group_budget">
             <div class="flex items-center justify-between">
               <label for="budget" class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Daily Food Budget</label>
-              <span class="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-md border border-indigo-100/50">${{ plannerForm.get('budget')?.value }} USD</span>
+              <span class="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-md border border-indigo-100/50">₹{{ plannerForm.get('budget')?.value }} INR</span>
             </div>
             <input type="range" 
                    id="budget"
                    formControlName="budget"
-                   min="5" 
-                   max="100" 
-                   step="5"
+                   min="50" 
+                   max="2000" 
+                   step="50"
                    class="w-full accent-indigo-600 bg-slate-100 rounded-lg h-1.5 cursor-pointer" />
             <div class="flex justify-between text-[9px] font-mono font-bold text-slate-400">
-              <span>$5 (Very Budget)</span>
-              <span>$50</span>
-              <span>$100 (Generous)</span>
+              <span>₹50 (Very Budget)</span>
+              <span>₹1000</span>
+              <span>₹2000 (Generous)</span>
             </div>
           </div>
 
           <!-- Dietary Restrictions -->
           <div class="flex flex-col space-y-1.5" id="form_group_diet">
-            <label for="dietaryPreferences" class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Dietary Preferences</label>
+            <label for="dietaryPreferences" class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Dietary / Cuisine Preferences</label>
             <div class="relative">
               <select id="dietaryPreferences"
                       formControlName="dietaryPreferences"
                       class="w-full text-sm px-4 py-3 bg-slate-50/60 border border-slate-200 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 rounded-xl transition-all outline-none appearance-none cursor-pointer font-medium">
-                <option value="None">None (Anything goes)</option>
+                <option value="Indian">Indian (Traditional / Any)</option>
+                <option value="Indian Vegetarian">Indian Vegetarian</option>
+                <option value="None">None (International / Anything goes)</option>
                 <option value="Vegetarian">Vegetarian</option>
                 <option value="Vegan">Vegan</option>
                 <option value="Gluten-Free">Gluten-Free</option>
@@ -323,12 +325,12 @@
             <div class="p-6 grid grid-cols-3 gap-4 border-b border-slate-100 text-center bg-slate-50/30" id="budget_details_grid">
               <div class="flex flex-col items-center justify-center p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Your Limit</span>
-                <span class="text-lg font-mono font-bold text-slate-800 mt-1">${{ budgetComparison().limit }}</span>
+                <span class="text-lg font-mono font-bold text-slate-800 mt-1">₹{{ budgetComparison().limit }}</span>
               </div>
               <div class="flex flex-col items-center justify-center p-3 bg-white border border-slate-200 rounded-xl shadow-2xs">
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Est. Cost</span>
                 <span class="text-lg font-mono font-bold mt-1" 
-                      [ngClass]="budgetComparison().isExceeded ? 'text-rose-600' : 'text-emerald-600'">${{ budgetComparison().actual }}</span>
+                      [ngClass]="budgetComparison().isExceeded ? 'text-rose-600' : 'text-emerald-600'">₹{{ budgetComparison().actual }}</span>
               </div>
               <div class="flex flex-col items-center justify-center p-3 border rounded-xl shadow-2xs"
                    [ngClass]="budgetComparison().isExceeded ? 'bg-rose-50/50 border-rose-200' : 'bg-emerald-50/50 border-emerald-200'">
@@ -338,7 +340,7 @@
                 </span>
                 <span class="text-lg font-mono font-bold mt-1"
                       [ngClass]="budgetComparison().isExceeded ? 'text-rose-800' : 'text-emerald-800'">
-                  ${{ budgetComparison().absDifference }}
+                  ₹{{ budgetComparison().absDifference }}
                 </span>
               </div>
             </div>
@@ -363,7 +365,7 @@
                       class="flex-1 py-3 text-xs rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer border border-transparent" id="tab_breakfast_btn">
                 <span class="text-sm">🍳</span>
                 <span>Breakfast</span>
-                <span class="text-[10px] font-mono text-amber-700 bg-amber-100/40 px-1.5 py-0.5 rounded-md border border-amber-200/10">${{ activePlan.breakfast.est_cost }}</span>
+                <span class="text-[10px] font-mono text-amber-700 bg-amber-100/40 px-1.5 py-0.5 rounded-md border border-amber-200/10">₹{{ activePlan.breakfast.est_cost }}</span>
               </button>
               <button type="button"
                       (click)="activeMealTab.set('lunch')"
@@ -371,7 +373,7 @@
                       class="flex-1 py-3 text-xs rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer border border-transparent" id="tab_lunch_btn">
                 <span class="text-sm">🥗</span>
                 <span>Lunch</span>
-                <span class="text-[10px] font-mono text-sky-700 bg-sky-100/40 px-1.5 py-0.5 rounded-md border border-sky-200/10">${{ activePlan.lunch.est_cost }}</span>
+                <span class="text-[10px] font-mono text-sky-700 bg-sky-100/40 px-1.5 py-0.5 rounded-md border border-sky-200/10">₹{{ activePlan.lunch.est_cost }}</span>
               </button>
               <button type="button"
                       (click)="activeMealTab.set('dinner')"
@@ -379,7 +381,7 @@
                       class="flex-1 py-3 text-xs rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer border border-transparent" id="tab_dinner_btn">
                 <span class="text-sm">🍲</span>
                 <span>Dinner</span>
-                <span class="text-[10px] font-mono text-indigo-700 bg-indigo-100/40 px-1.5 py-0.5 rounded-md border border-indigo-200/10">${{ activePlan.dinner.est_cost }}</span>
+                <span class="text-[10px] font-mono text-indigo-700 bg-indigo-100/40 px-1.5 py-0.5 rounded-md border border-indigo-200/10">₹{{ activePlan.dinner.est_cost }}</span>
               </button>
             </div>
 
@@ -407,7 +409,7 @@
                 <div class="text-right flex flex-col items-end">
                   <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Est. Cost</span>
                   <span class="text-sm font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100/50 mt-1.5">
-                    $@if (activeMealTab() === 'breakfast') { {{ activePlan.breakfast.est_cost }} }
+                    ₹@if (activeMealTab() === 'breakfast') { {{ activePlan.breakfast.est_cost }} }
                     @if (activeMealTab() === 'lunch') { {{ activePlan.lunch.est_cost }} }
                     @if (activeMealTab() === 'dinner') { {{ activePlan.dinner.est_cost }} }
                   </span>
